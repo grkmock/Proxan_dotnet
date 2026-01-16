@@ -265,3 +265,4 @@ C:\Users\User\Desktop\proxan_git\Proxan_dotnet\ProxanReservation\obj\Debug\net10
 C:\Users\User\Desktop\proxan_git\Proxan_dotnet\ProxanReservation\obj\Debug\net10.0\ProxanReservation.pdb
 C:\Users\User\Desktop\proxan_git\Proxan_dotnet\ProxanReservation\obj\Debug\net10.0\ProxanReservation.genruntimeconfig.cache
 C:\Users\User\Desktop\proxan_git\Proxan_dotnet\ProxanReservation\obj\Debug\net10.0\ref\ProxanReservation.dll
+C:\Users\User\Desktop\proxan_git\Proxan_dotnet\ProxanReservation\obj\Debug\net10.0\ProxanReservation.sourcelink.json

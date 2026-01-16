@@ -1,4 +1,5 @@
 pytest
 requests
 psycopg2-binary
-pytest-timeout
+celery
+redis

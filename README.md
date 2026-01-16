@@ -261,3 +261,21 @@ tests/e2e/test_reservation.py::test_comprehensive_flow
 ==================================================
 PASSED [100%]
 ```
+---
+## 🚀 Continuous Integration (GitHub Actions)
+
+Bu proje, her `push` ve `pull request` işleminde otomatik olarak çalışan kapsamlı bir CI/CD hattına sahiptir. 
+
+### Otomatik Test Süreci
+GitHub Actions iş akışımız (`.github/workflows/dotnet.yml`) aşağıdaki adımları sırasıyla gerçekleştirir:
+
+1.  **Environment Setup:** .NET 10 SDK ve Python 3.10 ortamları kurulur.
+2.  **Docker Orchestration:** `docker-compose` kullanılarak PostgreSQL ve Redis servisleri ayağa kaldırılır.
+3.  **Auto-Migration:** API servisi başladığında veritabanı şemasını otomatik olarak oluşturur.
+4.  **E2E Testing:** Pytest, gerçek bir API istemcisi gibi davranarak aşağıdaki senaryoları doğrular:
+    * **Security:** JWT/Token tabanlı yetkilendirme kontrolü.
+    * **Event Management:** Dinamik etkinlik oluşturma.
+    * **Reservation Flow:** Rezervasyonun `Hold` ve `Confirm` aşamaları.
+    * **Data Integrity:** İşlem sonrası veritabanı kapasite ve tutarlılık kontrolü.
+
+> **Not:** Test çıktıları detaylı loglama (`pytest -v -s`) ile GitHub Actions konsolunda görüntülenebilir.

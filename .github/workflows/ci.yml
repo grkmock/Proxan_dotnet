@@ -1,68 +1,50 @@
-name: Proxan E2E Test Pipeline
+name: CI
 
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
 
 jobs:
   test:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: "1234"
-          POSTGRES_DB: proxan_db
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
-    - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: '8.0.x'
-    
-    - name: Build Project
-      run: |
-        PROJECT_FILE=$(find . -name "*.csproj" -print -quit)
-        echo "Found project: $PROJECT_FILE"
-        dotnet build $PROJECT_FILE
+      - name: Start Docker Compose
+        run: |
+          docker compose up -d --build
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
+      - name: Wait for API to be ready
+        run: |
+          echo "Waiting for API..."
+          for i in {1..30}; do
+            if curl -s http://localhost:5000/swagger > /dev/null; then
+              echo "API is ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "API did not start"
+          docker compose logs
+          exit 1
 
-    - name: Install Dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pytest requests psycopg2-binary
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
 
-    - name: Run API and E2E Tests
-      env:
-        ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=proxan_db;Username=postgres;Password=1234"
-        ASPNETCORE_URLS: "http://localhost:5000"
-      run: |
-        # .csproj dosyasını otomatik bul
-        PROJECT_PATH=$(find . -name "*.csproj" | head -n 1)
-        echo "Çalıştırılan Proje: $PROJECT_PATH"
-        
-        # Projeyi arka planda başlat
-        dotnet run --no-build --project "$PROJECT_PATH" --urls "http://localhost:5000" & 
-        
-        # API ve DB senkronizasyonu için bekleme
-        sleep 45 
-        
-        # Testleri çalıştır
-        export PYTHONPATH=$PYTHONPATH:$(pwd)/tests/e2e
-        pytest tests/e2e/test_reservation.py -v -s
+      - name: Install Python dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run E2E tests
+        run: |
+          pytest tests/e2e -v
+
+      - name: Dump docker logs on failure
+        if: failure()
+        run: docker compose logs

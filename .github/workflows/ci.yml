@@ -15,7 +15,7 @@ jobs:
         image: postgres:15
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password  # Şifre burada 'password' olarak belirlendi
+          POSTGRES_PASSWORD: "1234" # Senin lokal şifrenle eşitledik
           POSTGRES_DB: proxan_db
         ports:
           - 5432:5432
@@ -33,7 +33,6 @@ jobs:
       with:
         dotnet-version: '8.0.x'
     
-    # Proje dosyasını spesifik olarak bulup derleyelim
     - name: Build Project
       run: dotnet build
 
@@ -49,23 +48,17 @@ jobs:
 
     - name: Run API and E2E Tests
       env:
-        # C# API'nin DB'ye bağlanması için
-        ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=proxan_db;Username=postgres;Password=password"
-        # Python setup_db.py'nin DB'ye bağlanması için (Yukarıda eklediğimiz os.getenv'ler için)
-        DB_HOST: "localhost"
-        DB_USER: "postgres"
-        DB_PASS: "password"
-        DB_NAME: "proxan_db"
+        # C# tarafı için şifreyi çevresel değişkenle eziyoruz
+        ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=proxan_db;Username=postgres;Password=1234"
+        # Python setup_db.py'nin bağlanabilmesi için (Lokal şifrenle aynı)
+        DB_PASS: "1234" 
         ASPNETCORE_URLS: "http://localhost:5000"
       run: |
-        # DİKKAT: Proje dosyanızın adı neyse onu tam yazın. 
-        # Eğer ana dizindeyse sadece '.' işe yarar ama hata verdiği için 
-        # projeyi açıkça çalıştırıyoruz:
-        dotnet run --no-build --urls "http://localhost:5000" & 
+        # Projenin nerede olduğunu bul ve oradan çalıştır
+        # Eğer Proxan_dotnet klasörü içindeyse o klasöre girer
+        dotnet run --no-build --project . --urls "http://localhost:5000" & 
         
-        # API ve DB'nin tam hazır olması için bekleme
         sleep 40 
         
-        # Testlerin modülleri bulması için
         export PYTHONPATH=$PYTHONPATH:$(pwd)/tests/e2e
         pytest tests/e2e/test_reservation.py -v -s

@@ -1,0 +1,90 @@
+{
+	"info": {
+		"_postman_id": "01adf5ee-3238-44d6-96d7-7e3320e60f80",
+		"name": "Proxan Reservation - Final Fixed v4",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "12988272"
+	},
+	"item": [
+		{
+			"name": "1. Create Event (Admin)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"Title\": \"Mülakat Özel Konseri\",\n    \"Capacity\": 100,\n    \"StartDate\": \"2026-06-15T20:00:00Z\",\n    \"EndDate\": \"2026-06-15T23:00:00Z\"\n}"
+				},
+				"url": {
+					"raw": ""
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "2. Get Event Details",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": ""
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "3. Hold Ticket",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "?eventId=1&userId=1",
+					"query": [
+						{
+							"key": "eventId",
+							"value": "1"
+						},
+						{
+							"key": "userId",
+							"value": "1"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "4. Confirm Reservation",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "",
+					"variable": [
+						{
+							"key": "reservationId",
+							"value": "1",
+							"description": "Hold isteğinden dönen ID rakamını buraya yazın (Örn: 6)"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "proxan-admin-secret-2026-token",
+				"type": "string"
+			}
+		]
+	}
+}

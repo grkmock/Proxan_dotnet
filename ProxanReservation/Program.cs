@@ -101,6 +101,23 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<AppDbContext>();
+        // Veritabanı hazır olana kadar birkaç saniye beklemek Docker ortamında daha sağlıklıdır
+        Console.WriteLine(">>> Veritabanı tabloları kontrol ediliyor...");
+        context.Database.Migrate(); 
+        Console.WriteLine(">>> Veritabanı başarıyla hazırlandı/güncellendi.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($">>> Migration Hatası: {ex.Message}");
+    }
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

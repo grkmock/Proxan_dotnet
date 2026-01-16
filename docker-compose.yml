@@ -8,6 +8,11 @@ services:
       - POSTGRES_DB=proxan_db
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
@@ -19,23 +24,26 @@ services:
     build: .
     container_name: proxan_api_container
     ports:
-      - "5000:8080" # .NET 10 içeride 8080'de çalışır, dışarıya 5000 olarak açarız
+      - "5000:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      # Docker ağında 'db' ismini kullanarak Postgres'e bağlanır
       - ConnectionStrings__DefaultConnection=Host=db;Database=proxan_db;Username=postgres;Password=1234
     depends_on:
-      - db
+      db:
+        condition: service_healthy # DB tamamen hazır olana kadar bekle
 
   worker:
     build: .
     container_name: proxan_worker_container
-    # Celery'nin senin ProxanReservation klasöründeki worker'ı bulmasını sağlar
     command: python3 -m celery -A tests.worker worker --loglevel=info
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
+      # DÜZELTME: localhost yerine db kullanıldı
       - DATABASE_URL=postgresql://postgres:1234@db:5432/proxan_db
+      - API_URL=http://web:8080
       - PYTHONPATH=.
     depends_on:
-      - redis
-      - db
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started

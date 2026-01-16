@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ProxanReservation")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6b9bc5d8b3cdb2fb162e4dd47cf5342cb7be3a5c")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+972cb5839f092fc5d8a40c42c1614936f399d6a4")]
 [assembly: System.Reflection.AssemblyProductAttribute("ProxanReservation")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ProxanReservation")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

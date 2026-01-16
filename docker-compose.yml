@@ -1,17 +1,39 @@
 services:
+  db:
+    image: postgres:15
+    container_name: proxan_db_container
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_DB=proxan_db
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    container_name: proxan_redis_container
+    ports:
+      - "6379:6379"
+
   web:
     build: .
+    container_name: proxan_api_container
     ports:
-      - "5000:80" # .NET genelde içeride 80 veya 5000 portunu kullanır
+      - "5000:8080" # .NET 8 varsayılan portu 8080'dir, dışarıya 5000 veriyoruz
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Host=db;Database=proxan_db;Username=postgres;Password=1234
     depends_on:
       - db
 
-  # Eğer Python tabanlı bir worker kullanıyorsan (testler için):
   worker:
     build: .
+    container_name: proxan_worker_container
+    # Worker komutunu senin klasör yapına göre güncelledim
     command: python3 -m celery -A tests.worker worker --loglevel=info
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - DATABASE_URL=postgresql://postgres:1234@db:5432/proxan_db
     depends_on:
       - redis
+      - db

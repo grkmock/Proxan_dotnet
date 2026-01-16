@@ -32,7 +32,6 @@ jobs:
       with:
         dotnet-version: '8.0.x'
     
-    # .csproj dosyasını nerede olursa olsun bulup derler
     - name: Build Project
       run: |
         PROJECT_FILE=$(find . -name "*.csproj" -print -quit)
@@ -54,13 +53,16 @@ jobs:
         ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=proxan_db;Username=postgres;Password=1234"
         ASPNETCORE_URLS: "http://localhost:5000"
       run: |
-        # .csproj dosyasını bul ve başlat
-        PROJECT_FILE=$(find . -name "*.csproj" -print -quit)
-        dotnet run --no-build --project $PROJECT_FILE --urls "http://localhost:5000" & 
+        # .csproj dosyasını otomatik bul
+        PROJECT_PATH=$(find . -name "*.csproj" | head -n 1)
+        echo "Çalıştırılan Proje: $PROJECT_PATH"
         
-        # API'nin ve DB'nin tamamen senkronize olması için bekleme
-        sleep 40 
+        # Projeyi arka planda başlat
+        dotnet run --no-build --project "$PROJECT_PATH" --urls "http://localhost:5000" & 
         
-        # Python modül yolu ayarı ve test çalıştırma
+        # API ve DB senkronizasyonu için bekleme
+        sleep 45 
+        
+        # Testleri çalıştır
         export PYTHONPATH=$PYTHONPATH:$(pwd)/tests/e2e
         pytest tests/e2e/test_reservation.py -v -s

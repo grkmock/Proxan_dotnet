@@ -16,19 +16,22 @@ jobs:
 
       - name: Start Docker Compose
         run: |
+          # Projenin kök dizinindeki docker-compose.yml dosyasını çalıştırır
           docker compose up -d --build
 
       - name: Wait for API to be ready
         run: |
-          echo "Waiting for API..."
-          for i in {1..30}; do
-            if curl -s http://localhost:5000/swagger > /dev/null; then
-              echo "API is ready"
+          echo "Waiting for API on localhost:5000..."
+          # API'nin ayağa kalkması için 60 saniye boyunca deneme yapar
+          for i in {1..20}; do
+            if curl -s http://localhost:5000/api/Events > /dev/null; then
+              echo "✅ API is ready!"
               exit 0
             fi
-            sleep 2
+            echo "Retrying in 3s... ($i/20)"
+            sleep 3
           done
-          echo "API did not start"
+          echo "❌ API did not start in time"
           docker compose logs
           exit 1
 
@@ -40,11 +43,16 @@ jobs:
       - name: Install Python dependencies
         run: |
           pip install -r requirements.txt
+          # psycopg2-binary'nin yüklü olduğundan emin ol (setup_db.py için)
+          pip install psycopg2-binary pytest requests
 
       - name: Run E2E tests
         run: |
+          # conftest.py ve setup_db.py'nin bulunduğu klasöre göre yolu ayarla
           pytest tests/e2e -v
 
       - name: Dump docker logs on failure
         if: failure()
-        run: docker compose logs
+        run: |
+          echo "--- DOCKER LOGS ---"
+          docker compose logs

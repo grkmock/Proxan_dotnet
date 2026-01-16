@@ -1,4 +1,4 @@
-name: Proxan E2E Test Pipeline
+name: Proxan CI
 
 on:
   push:
@@ -7,42 +7,53 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
+  e2e:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: proxan
+          POSTGRES_PASSWORD: proxan
+          POSTGRES_DB: proxan
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U proxan"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: Host=localhost;Port=5432;Database=proxan;Username=proxan;Password=proxan
+      ASPNETCORE_ENVIRONMENT: Development
+
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-    # .NET Kurulumu
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: '8.0.x'
-    
-    - name: Build Project
-      run: dotnet build
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
 
-    # Python Kurulumu
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
+      - name: Restore & Build
+        run: |
+          dotnet restore
+          dotnet build --no-restore
 
-    # Gerekli Paketlerin Yüklenmesi (psycopg2-binary eklendi)
-    - name: Install Dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pytest requests psycopg2-binary
+      - name: Start API
+        run: |
+          dotnet run --project ProxanReservation/ProxanReservation.csproj --urls http://0.0.0.0:5000 &
+          sleep 10
 
-    # API'yi Başlat ve Testleri Koştur
-    - name: Run API and E2E Tests
-      run: |
-        # API'yi arka planda başlat (ana dizindeki projeyi çalıştır)
-        dotnet run --no-build & 
-        
-        # API'nin hazır olması için bekle
-        sleep 20 
-        
-        # PYTHONPATH ayarı ile setup_db'nin bulunmasını sağla
-        export PYTHONPATH=$PYTHONPATH:$(pwd)/tests/e2e
-        pytest tests/e2e/test_reservation.py -v -s
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Python deps
+        run: pip install -r tests/requirements.txt
+
+      - name: Run E2E Tests
+        run: pytest tests/e2e -v

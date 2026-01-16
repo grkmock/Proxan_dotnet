@@ -3,8 +3,7 @@ name: Proxan E2E Test Pipeline
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   test:
@@ -15,7 +14,7 @@ jobs:
         image: postgres:15
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: "1234" # Senin lokal şifrenle eşitledik
+          POSTGRES_PASSWORD: "1234"
           POSTGRES_DB: proxan_db
         ports:
           - 5432:5432
@@ -33,8 +32,12 @@ jobs:
       with:
         dotnet-version: '8.0.x'
     
+    # .csproj dosyasını nerede olursa olsun bulup derler
     - name: Build Project
-      run: dotnet build
+      run: |
+        PROJECT_FILE=$(find . -name "*.csproj" -print -quit)
+        echo "Found project: $PROJECT_FILE"
+        dotnet build $PROJECT_FILE
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -48,17 +51,16 @@ jobs:
 
     - name: Run API and E2E Tests
       env:
-        # C# tarafı için şifreyi çevresel değişkenle eziyoruz
         ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=proxan_db;Username=postgres;Password=1234"
-        # Python setup_db.py'nin bağlanabilmesi için (Lokal şifrenle aynı)
-        DB_PASS: "1234" 
         ASPNETCORE_URLS: "http://localhost:5000"
       run: |
-        # Projenin nerede olduğunu bul ve oradan çalıştır
-        # Eğer Proxan_dotnet klasörü içindeyse o klasöre girer
-        dotnet run --no-build --project . --urls "http://localhost:5000" & 
+        # .csproj dosyasını bul ve başlat
+        PROJECT_FILE=$(find . -name "*.csproj" -print -quit)
+        dotnet run --no-build --project $PROJECT_FILE --urls "http://localhost:5000" & 
         
+        # API'nin ve DB'nin tamamen senkronize olması için bekleme
         sleep 40 
         
+        # Python modül yolu ayarı ve test çalıştırma
         export PYTHONPATH=$PYTHONPATH:$(pwd)/tests/e2e
         pytest tests/e2e/test_reservation.py -v -s
